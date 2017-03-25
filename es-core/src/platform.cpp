@@ -94,3 +94,4 @@ void touch(const std::string& filename)
 		close(fd);
 #endif
 }
+
