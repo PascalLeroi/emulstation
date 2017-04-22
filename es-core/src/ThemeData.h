@@ -38,6 +38,7 @@ namespace ThemeFlags
 		FORCE_UPPERCASE = 1024,
 		LINE_SPACING = 2048,
 		DELAY = 4096,
+		Z_INDEX = 8192,
 
 		ALL = 0xFFFFFFFF
 	};
@@ -70,7 +71,7 @@ ThemeException& operator<<(ThemeException& e, T appendMsg)
 	e.msg = ss.str();
 	return e;
 }
-
+/*
 class ThemeExtras : public GuiComponent
 {
 public:
@@ -83,7 +84,7 @@ public:
 private:
 	std::vector<GuiComponent*> mExtras;
 };
-
+*/
 struct ThemeSet
 {
 	boost::filesystem::path path;

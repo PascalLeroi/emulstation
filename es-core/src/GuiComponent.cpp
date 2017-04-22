@@ -105,6 +105,26 @@ void GuiComponent::setSize(float w, float h)
     onSizeChanged();
 }
 
+float GuiComponent::getZIndex() const
+{
+	return zIndex;
+}
+
+void GuiComponent::setZIndex(float z)
+{
+	zIndex = z;
+}
+
+float GuiComponent::getDefaultZIndex() const
+{
+	return zIndex;
+}
+
+void GuiComponent::setDefaultZIndex(float z)
+{
+	zIndex = z;
+}
+
 //Children stuff.
 void GuiComponent::addChild(GuiComponent* cmp)
 {
@@ -141,6 +161,13 @@ void GuiComponent::removeChild(GuiComponent* cmp)
 void GuiComponent::clearChildren()
 {
 	mChildren.clear();
+}
+
+void GuiComponent::sortChildren()
+{
+	std:stable_sort(mChildren.begin(), mChildren.end(),  [](GuiComponent* a, GuiComponent* b) {
+		return b->getZIndex() > a->getZIndex();
+	});
 }
 
 unsigned int GuiComponent::getChildCount() const
@@ -320,6 +347,11 @@ void GuiComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const std
 
 	if(properties & ThemeFlags::SIZE && elem->has("size"))
 		setSize(elem->get<Eigen::Vector2f>("size").cwiseProduct(scale));
+
+	if(properties & ThemeFlags::Z_INDEX && elem->has("zIndex"))
+		setZIndex(elem->get<float>("zIndex"));
+	else
+		setZIndex(getDefaultZIndex());
 }
 
 void GuiComponent::updateHelpPrompts()
