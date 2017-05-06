@@ -44,19 +44,30 @@ void SystemView::populate()
 		if(theme->getElement("system", "logo", "image"))
 		{
 			ImageComponent* logo = new ImageComponent(mWindow, false, false);
-			logo->setMaxSize(Eigen::Vector2f(mCarousel.logoSize.x(), mCarousel.logoSize.y()));
-			logo->applyTheme((*it)->getTheme(), "system", "logo", ThemeFlags::PATH);
-			logo->setPosition((mCarousel.logoSize.x() - logo->getSize().x()) / 2,
-				(mCarousel.logoSize.y() - logo->getSize().y()) / 2); // center
-			e.data.logo = std::shared_ptr<GuiComponent>(logo);
+			logo->setMaxSize(Eigen::Vector2f(mCarousel.logoSize.x() * mCarousel.logoScale, mCarousel.logoSize.y() * mCarousel.logoScale));
+			logo->applyTheme((*it)->getTheme(), "system", "logo", ThemeFlags::PATH | ThemeFlags::COLOR);
 
-			ImageComponent* logoSelected = new ImageComponent(mWindow, false, false);
-			logoSelected->setMaxSize(Eigen::Vector2f(mCarousel.logoSize.x() * mCarousel.logoScale, mCarousel.logoSize.y() * mCarousel.logoScale));
-			logoSelected->applyTheme((*it)->getTheme(), "system", "logo", ThemeFlags::PATH | ThemeFlags::COLOR);
-			logoSelected->setPosition((mCarousel.logoSize.x() - logoSelected->getSize().x()) / 2,
-				(mCarousel.logoSize.y() - logoSelected->getSize().y()) / 2); // center
-			e.data.logoSelected = std::shared_ptr<GuiComponent>(logoSelected);
-			
+			if (mCarousel.type == VERTICAL)
+			{
+				if (mCarousel.logoAlignment == LEFT)
+					logo->setOrigin(0, 0.5);
+				else if (mCarousel.logoAlignment == RIGHT)
+					logo->setOrigin(1.0, 0.5);
+				else
+					logo->setOrigin(0.5, 0.5);
+			} else {
+				if (mCarousel.logoAlignment == TOP)
+					logo->setOrigin(0.5, 0);
+				else if (mCarousel.logoAlignment == BOTTOM)
+					logo->setOrigin(0.5, 1);
+				else
+					logo->setOrigin(0.5, 0.5);
+			}
+
+			logo->setPosition(mCarousel.logoSize.x() * logo->getOrigin().x(),
+					mCarousel.logoSize.y() * logo->getOrigin().y());
+
+			e.data.logo = std::shared_ptr<GuiComponent>(logo);
 		}else{
 			// no logo in theme; use text
 			TextComponent* text = new TextComponent(mWindow, 
@@ -64,16 +75,9 @@ void SystemView::populate()
 				Font::get(FONT_SIZE_LARGE), 
 				0x000000FF, 
 				ALIGN_CENTER);
-			text->setSize(mCarousel.logoSize);
-			e.data.logo = std::shared_ptr<GuiComponent>(text);
+			text->setSize(mCarousel.logoSize * mCarousel.logoScale);
 
-			TextComponent* textSelected = new TextComponent(mWindow, 
-				(*it)->getName(), 
-				Font::get((int)(FONT_SIZE_LARGE * 1.5)),
-				0x000000FF, 
-				ALIGN_CENTER);
-			textSelected->setSize(mCarousel.logoSize);
-			e.data.logoSelected = std::shared_ptr<GuiComponent>(textSelected);
+			e.data.logo = std::shared_ptr<GuiComponent>(text);
 		}
 
 		// make background extras
@@ -337,14 +341,19 @@ void  SystemView::getViewElements(const std::shared_ptr<ThemeData>& theme)
 //  Render system carousel
 void SystemView::renderCarousel(const Eigen::Affine3f& trans)
 {
-	Eigen::Vector2i clipPos((int)mCarousel.pos.x(), (int)mCarousel.pos.y());
-	Eigen::Vector2i clipSize((int)mCarousel.size.x(), (int)mCarousel.size.y());
+	//Eigen::Vector2i clipPos((int)mCarousel.pos.x(), (int)mCarousel.pos.y());
+	//Eigen::Vector2i clipSize((int)mCarousel.size.x(), (int)mCarousel.size.y());
 
-	Renderer::pushClipRect(clipPos, clipSize);
+	//Renderer::pushClipRect(clipPos, clipSize);
+	Renderer::pushClipRect(mCarousel.pos.cast<int>(), mCarousel.size.cast<int>());
 
 	// background box behind logos
-	Renderer::setMatrix(trans);
-	Renderer::drawRect(mCarousel.pos.x(), mCarousel.pos.y(), mCarousel.size.x(), mCarousel.size.y(), mCarousel.color);
+
+	Eigen::Affine3f carouselTrans = trans;
+	carouselTrans.translate(Eigen::Vector3f(mCarousel.pos.x(), mCarousel.pos.y(), 0.0));
+
+	Renderer::setMatrix(carouselTrans);
+	Renderer::drawRect(0.0, 0.0, mCarousel.size.x(), mCarousel.size.y(), mCarousel.color);
 
 	// draw logos
 	Eigen::Vector2f logoSpacing(0.0, 0.0); // NB: logoSpacing will include the size of the logo itself as well!
@@ -355,20 +364,36 @@ void SystemView::renderCarousel(const Eigen::Affine3f& trans)
 	{
 		case VERTICAL:
 			logoSpacing[1] = ((mCarousel.size.y() - (mCarousel.logoSize.y() * mCarousel.maxLogoCount)) / (mCarousel.maxLogoCount)) + mCarousel.logoSize.y();
-			xOff = mCarousel.pos.x() + (mCarousel.size.x() / 2) - (mCarousel.logoSize.x() / 2);
-			yOff = mCarousel.pos.y() + (mCarousel.size.y() - mCarousel.logoSize.y()) / 2 - (mCamOffset * logoSpacing[1]);
+			yOff = (mCarousel.size.y() - mCarousel.logoSize.y()) / 2 - (mCamOffset * logoSpacing[1]);
+
+			if (mCarousel.logoAlignment == LEFT)
+				xOff = mCarousel.logoSize.x() / 10;
+			else if (mCarousel.logoAlignment == RIGHT)
+				xOff = mCarousel.size.x() - (mCarousel.logoSize.x() * 1.1) ;
+			else
+				xOff = (mCarousel.size.x() - mCarousel.logoSize.x()) / 2;
 			break;
 		case HORIZONTAL:
 		default:
 			logoSpacing[0] = ((mCarousel.size.x() - (mCarousel.logoSize.x() * mCarousel.maxLogoCount)) / (mCarousel.maxLogoCount)) + mCarousel.logoSize.x();
-			xOff = mCarousel.pos.x() + (mCarousel.size.x() - mCarousel.logoSize.x()) / 2 - (mCamOffset * logoSpacing[0]);
-			yOff = mCarousel.pos.y() + (mCarousel.size.y() / 2) - (mCarousel.logoSize.y() / 2);
+			xOff = (mCarousel.size.x() - mCarousel.logoSize.x()) / 2 - (mCamOffset * logoSpacing[0]);
+
+			if (mCarousel.logoAlignment == TOP)
+				yOff = mCarousel.logoSize.y() / 10;
+			else if (mCarousel.logoAlignment == BOTTOM)
+				yOff = mCarousel.size.y() - (mCarousel.logoSize.y() * 1.1);
+			else
+				yOff = (mCarousel.size.y() - mCarousel.logoSize.y()) / 2;
 			break;
 	}
 
-	Eigen::Affine3f logoTrans = trans;
+	//Eigen::Affine3f logoTrans = carouselTrans;
 	int center = (int)(mCamOffset);
 	int logoCount = std::min(mCarousel.maxLogoCount, (int)mEntries.size());
+
+	// TODO: figure out how to make this work with bufferIndex
+//	if (logoCount != 1)
+//		logoCount += 2;
 
 	// Adding texture loading buffers depending on scrolling speed and status	
 	int bufferIndex = getScrollingVelocity() + 1;	
@@ -381,19 +406,28 @@ void SystemView::renderCarousel(const Eigen::Affine3f& trans)
 		while (index >= (int)mEntries.size())
 			index -= mEntries.size();
 
-		logoTrans.translation() = trans.translation() + Eigen::Vector3f(i * logoSpacing[0] + xOff, i * logoSpacing [1] + yOff, 0);
+		Eigen::Affine3f logoTrans = carouselTrans;
+		logoTrans.translate(Eigen::Vector3f(i * logoSpacing[0] + xOff, i * logoSpacing[1] + yOff, 0));
+
+		float distance = i - mCamOffset;
+
+		float scale = 1.0 + ((mCarousel.logoScale - 1.0) * (1 - abs(distance)));
+		scale = std::min(mCarousel.logoScale, std::max(1.0f, scale));
+		scale /= mCarousel.logoScale;
+
+		const std::shared_ptr<GuiComponent>& comp = mEntries.at(index).data.logo;
+		comp->setRotation(mCarousel.logoRotation * distance);
+		comp->setScale(scale);
+		//comp->setOrigin(comp->getOrigin());
 
 		if (index == mCursor) //Selected System
 		{
-			const std::shared_ptr<GuiComponent>& comp = mEntries.at(index).data.logoSelected;
 			comp->setOpacity(0xFF);
-			comp->render(logoTrans);
 		}
 		else { // not selected systems
-			const std::shared_ptr<GuiComponent>& comp = mEntries.at(index).data.logo;
 			comp->setOpacity(0x80);
-			comp->render(logoTrans);
 		}
+		comp->render(logoTrans);
 	}
 	Renderer::popClipRect();
 }
@@ -407,12 +441,12 @@ void SystemView::renderInfoBar(const Eigen::Affine3f& trans)
 // Draw background extras
 void SystemView::renderExtras(const Eigen::Affine3f& trans)
 {
-	Eigen::Affine3f extrasTrans = trans;
 	int extrasCenter = (int)mExtrasCamOffset;
 	
 	// Adding texture loading buffers depending on scrolling speed and status
 	int bufferIndex = getScrollingVelocity() + 1;
-	
+
+	Renderer::pushClipRect(Eigen::Vector2i(0, 0), mSize.cast<int>());
 	for (int i = extrasCenter + logoBuffersLeft[bufferIndex]; i <= extrasCenter + logoBuffersRight[bufferIndex]; i++)
 	{
 		int index = i;
@@ -421,13 +455,15 @@ void SystemView::renderExtras(const Eigen::Affine3f& trans)
 		while (index >= (int)mEntries.size())
 			index -= mEntries.size();
 
-		extrasTrans.translation() = trans.translation() + Eigen::Vector3f((i - mExtrasCamOffset) * mSize.x(), 0, 0);
+		Eigen::Affine3f extrasTrans = trans;
+		if (mCarousel.type == HORIZONTAL)
+			extrasTrans.translate(Eigen::Vector3f((i - mExtrasCamOffset) * mSize.x(), 0, 0));
+		else
+			extrasTrans.translate(Eigen::Vector3f(0, (i - mExtrasCamOffset) * mSize.y(), 0));
 
-		Eigen::Vector2i clipRect = Eigen::Vector2i((int)((i - mExtrasCamOffset) * mSize.x()), 0);
-		Renderer::pushClipRect(clipRect, mSize.cast<int>());
 		mEntries.at(index).data.backgroundExtras->render(extrasTrans);
-		Renderer::popClipRect();
 	}
+	Renderer::popClipRect();
 
 	// fade extras if necessary
 	if (mExtrasFadeOpacity)
@@ -442,12 +478,14 @@ void  SystemView::getDefaultElements(void)
 {
 	// Carousel
 	mCarousel.type = HORIZONTAL;
+	mCarousel.logoAlignment = CENTER;
 	mCarousel.size.x() = mSize.x();
 	mCarousel.size.y() = 0.2325f * mSize.y();
 	mCarousel.pos.x() = 0.0f;
 	mCarousel.pos.y() = 0.5f * (mSize.y() - mCarousel.size.y());
 	mCarousel.color = 0xFFFFFFD8;
 	mCarousel.logoScale = 1.2f;
+	mCarousel.logoRotation = 0;//.25f * M_PI;
 	mCarousel.logoSize.x() = 0.25f * mSize.x();
 	mCarousel.logoSize.y() = 0.155f * mSize.y();
 	mCarousel.maxLogoCount = 3;
@@ -477,4 +515,19 @@ void SystemView::getCarouselFromTheme(const ThemeData::ThemeElement* elem)
 		mCarousel.logoSize = elem->get<Eigen::Vector2f>("logoSize").cwiseProduct(mSize);
 	if (elem->has("maxLogoCount"))
 		mCarousel.maxLogoCount = std::round(elem->get<float>("maxLogoCount"));
+	if (elem->has("logoRotation"))
+		mCarousel.logoRotation = elem->get<float>("logoRotation") * M_PI / 180;
+	if (elem->has("logoAlignment"))
+	{
+		if (!(elem->get<std::string>("logoAlignment").compare("left")))
+			mCarousel.logoAlignment = LEFT;
+		else if (!(elem->get<std::string>("logoAlignment").compare("right")))
+			mCarousel.logoAlignment = RIGHT;
+		else if (!(elem->get<std::string>("logoAlignment").compare("top")))
+			mCarousel.logoAlignment = TOP;
+		else if (!(elem->get<std::string>("logoAlignment").compare("bottom")))
+			mCarousel.logoAlignment = BOTTOM;
+		else
+			mCarousel.logoAlignment = CENTER;
+	}
 }

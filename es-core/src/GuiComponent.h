@@ -3,6 +3,7 @@
 #include "InputConfig.h"
 #include <memory>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include "HelpStyle.h"
 
 class Window;
@@ -45,6 +46,12 @@ public:
     void setSize(const Eigen::Vector2f& size);
     void setSize(float w, float h);
     virtual void onSizeChanged() {};
+
+    float getRotation() const;
+    void setRotation(float rotation);
+
+    float getScale() const;
+    void setScale(float scale);
 	
 	void setParent(GuiComponent* parent);
 	GuiComponent* getParent() const;
@@ -109,6 +116,8 @@ protected:
 
 	Eigen::Vector3f mPosition;
 	Eigen::Vector2f mSize;
+	float mRotation;
+	float mScale;
 
 	bool mIsProcessing;
 

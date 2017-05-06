@@ -28,6 +28,7 @@ public:
 	//Sets the origin as a percentage of this image (e.g. (0, 0) is top left, (0.5, 0.5) is the center)
 	void setOrigin(float originX, float originY);
 	inline void setOrigin(Eigen::Vector2f origin) { setOrigin(origin.x(), origin.y()); }
+	Eigen::Vector2f getOrigin();
 
 	// Resize the image to fit this size. If one axis is zero, scale that axis to maintain aspect ratio.
 	// If both are non-zero, potentially break the aspect ratio.  If both are zero, no resizing.

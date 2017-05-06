@@ -16,10 +16,18 @@ enum CarouselType : unsigned int
 	VERTICAL = 1
 };
 
+enum LogoAlignment
+{
+	CENTER,
+	LEFT,
+	RIGHT,
+	TOP,
+	BOTTOM
+};
+
 struct SystemViewData
 {
 	std::shared_ptr<GuiComponent> logo;
-	std::shared_ptr<GuiComponent> logoSelected;
 	std::shared_ptr<ThemeExtras> backgroundExtras;
 };
 
@@ -29,10 +37,13 @@ struct SystemViewCarousel
 	Eigen::Vector2f pos;
 	Eigen::Vector2f size;
 	float logoScale;
+	float logoRotation;
 	Eigen::Vector2f logoSpacing;
+	LogoAlignment logoAlignment;
 	unsigned int color;
 	int maxLogoCount; // number of logos shown on the carousel
 	Eigen::Vector2f logoSize;
+
 };
 
 class SystemView : public IList<SystemViewData, SystemData*>

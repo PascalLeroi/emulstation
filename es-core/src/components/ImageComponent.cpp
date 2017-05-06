@@ -17,7 +17,7 @@ Eigen::Vector2i ImageComponent::getTextureSize() const
 
 Eigen::Vector2f ImageComponent::getCenter() const
 {
-	return Eigen::Vector2f(mPosition.x() - (getSize().x() * mOrigin.x()) + getSize().x() / 2, 
+	return Eigen::Vector2f(mPosition.x() - (getSize().x() * mOrigin.x()) + getSize().x() / 2,
 		mPosition.y() - (getSize().y() * mOrigin.y()) + getSize().y() / 2);
 }
 
@@ -129,6 +129,11 @@ void ImageComponent::setOrigin(float originX, float originY)
 {
 	mOrigin << originX, originY;
 	updateVertices();
+}
+
+Eigen::Vector2f ImageComponent::getOrigin()
+{
+	return mOrigin;
 }
 
 void ImageComponent::setResize(float width, float height)
@@ -362,6 +367,9 @@ void ImageComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const s
 
 	if(properties & COLOR && elem->has("color"))
 		setColorShift(elem->get<unsigned int>("color"));
+
+	if(elem->has("rotation"))
+		setRotation(elem->get<float>("rotation"));
 }
 
 std::vector<HelpPrompt> ImageComponent::getHelpPrompts()

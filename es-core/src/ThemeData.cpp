@@ -34,6 +34,7 @@ std::map< std::string, ElementMapType > ThemeData::sElementMap = boost::assign::
 		("origin", NORMALIZED_PAIR)
 		("path", PATH)
 		("tile", BOOLEAN)
+		("rotation", FLOAT)
 		("color", COLOR)))
 	("text", makeMap(boost::assign::map_list_of
 		("pos", NORMALIZED_PAIR)
@@ -46,6 +47,7 @@ std::map< std::string, ElementMapType > ThemeData::sElementMap = boost::assign::
 		("alignment", STRING)
 		("forceUppercase", BOOLEAN)
 		("lineSpacing", FLOAT)
+		("rotation", FLOAT)
 		("value", STRING)))
 	("textlist", makeMap(boost::assign::map_list_of
 		("pos", NORMALIZED_PAIR)
@@ -103,7 +105,9 @@ std::map< std::string, ElementMapType > ThemeData::sElementMap = boost::assign::
 		("pos", NORMALIZED_PAIR)
 		("color", COLOR)
 		("logoScale", FLOAT)
+		("logoRotation", FLOAT)
 		("logoSize", NORMALIZED_PAIR)
+		("logoAlignment", STRING)
 		("maxLogoCount", FLOAT)));
 
 namespace fs = boost::filesystem;

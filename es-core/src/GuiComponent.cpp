@@ -7,7 +7,7 @@
 
 GuiComponent::GuiComponent(Window* window) : mWindow(window), mParent(NULL), mOpacity(255), 
 	mPosition(Eigen::Vector3f::Zero()), mSize(Eigen::Vector2f::Zero()), mTransform(Eigen::Affine3f::Identity()),
-	mIsProcessing(false)
+	mIsProcessing(false), mScale(1.0f), mRotation(0.0f)
 {
 	for(unsigned char i = 0; i < MAX_ANIMATIONS; i++)
 		mAnimationMap[i] = NULL;
@@ -105,6 +105,28 @@ void GuiComponent::setSize(float w, float h)
     onSizeChanged();
 }
 
+float GuiComponent::getRotation() const
+{
+	return mRotation;
+}
+
+void GuiComponent::setRotation(float rotation)
+{
+	mRotation = rotation * M_PI / 180;
+}
+
+float GuiComponent::getScale() const
+{
+	return mScale;
+}
+
+void GuiComponent::setScale(float scale)
+{
+	mScale = scale;
+    onSizeChanged();
+}
+
+
 //Children stuff.
 void GuiComponent::addChild(GuiComponent* cmp)
 {
@@ -181,6 +203,15 @@ const Eigen::Affine3f& GuiComponent::getTransform()
 {
 	mTransform.setIdentity();
 	mTransform.translate(mPosition);
+
+	if (mScale != 1.0f)
+	{
+		mTransform *= Eigen::Scaling(mScale);
+	}
+	if (mRotation != 0.0f)
+	{
+		mTransform *= Eigen::AngleAxisf(mRotation, Eigen::Vector3f::UnitZ());
+	}
 	return mTransform;
 }
 
@@ -320,6 +351,9 @@ void GuiComponent::applyTheme(const std::shared_ptr<ThemeData>& theme, const std
 
 	if(properties & ThemeFlags::SIZE && elem->has("size"))
 		setSize(elem->get<Eigen::Vector2f>("size").cwiseProduct(scale));
+
+	if(elem->has("rotation"))
+		setRotation(elem->get<float>("rotation"));
 }
 
 void GuiComponent::updateHelpPrompts()
