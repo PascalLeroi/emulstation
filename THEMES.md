@@ -402,8 +402,10 @@ Reference
 	- The help system style for this view.
 * `carousel name="systemcarousel"` -ALL
 	- The system logo carousel
-* `image name="logo"` - PATH
+* `image name="logo"` - PATH | COLOR
 	- A logo image, to be displayed in the system logo carousel.
+* `text name="logoText"` - FONT_PATH | COLOR | FORCE_UPPERCASE
+	- A logo text, to be displayed system name in the system logo carousel when no logo is available.
 * `text name="systemInfo"` - ALL
 	- Displays details of the system currently selected in the carousel.
 * You can use extra elements (elements with `extra="true"`) to add your own backgrounds, etc.  They will be displayed behind the carousel, and scroll relative to the carousel.
